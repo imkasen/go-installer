@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 # Install the latest go version
+GOROOT=/usr/local/go/
 
 # Check system architecture
 arch(){
@@ -29,23 +30,24 @@ downloadGo(){
     
     if [[ "$CUR_VERSION" < "$VERSION" ]]; then
         if [[ ! -e $PACKAGE ]]; then
-            echo "Downloading '${PACKAGE}' from '${URL}'..." 
+            echo "Download '${PACKAGE}' from '${URL}'." 
             curl -LJ "$URL$PACKAGE" -o "$PACKAGE" --progress-bar
         else
             echo "The package already exists."
         fi
     else
         echo "The latest version is already installed!" >& 2
-        exit 1
+        exit 1 
     fi
 }
 
 # Install
 installGo(){
-    if [[ -d "/usr/local/go/" ]]; then
-        echo "Deleting '/usr/local/go/'..."
-        sudo rm -rf /usr/local/go
+    if [[ -d ${GOROOT} ]]; then
+        echo "Delete '${GOROOT}'..."
+        sudo rm -rf ${GOROOT}
     fi
+    echo "Untar '${PACKAGE}'..."
     sudo tar -C /usr/local -xzf "$PACKAGE"
 }
 
@@ -54,7 +56,7 @@ main(){
     arch
     checkNet
     downloadGo
-    #installGo
+    installGo
     echo "====Finish installation===="
 }
 
