@@ -59,7 +59,7 @@ configPath(){
         SHFILE=".bashrc"
     fi
 
-    if [[ -e ~/$SHFILE && $(grep -c "# Go" ~/$SHFILE) -eq 0 ]]; then
+    if [[ -e ~/$SHFILE && $(grep -c "GOPATH" ~/$SHFILE) -eq 0 ]]; then
         echo "Configure path..."
         {
             echo
