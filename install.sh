@@ -65,7 +65,7 @@ configPath(){
             echo
             echo "# Go"
             echo "export GOROOT=/usr/local/go/"
-            echo "export GOPATH=\$HOME/.gopath/"
+            echo "export GOPATH=\$HOME/go"
             echo "export PATH=\$PATH:\$GOROOT/bin:\$GOPATH/bin"
             echo
         } >> ~/$SHFILE
