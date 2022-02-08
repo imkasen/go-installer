@@ -59,14 +59,13 @@ configPath(){
         SHFILE=".bashrc"
     fi
 
-    if [[ -e ~/$SHFILE && $(grep -c "GOPATH" ~/$SHFILE) -eq 0 ]]; then
+    if [[ -e ~/$SHFILE && $(grep -c "/usr/local/go" ~/$SHFILE) -eq 0 ]]; then
         echo "Configure path..."
         {
             echo
             echo "# Go"
             echo "export GOROOT=/usr/local/go/"
-            echo "export GOPATH=\$HOME/go"
-            echo "export PATH=\$PATH:\$GOROOT/bin:\$GOPATH/bin"
+            echo "export PATH=\$PATH:\$GOROOT/bin"
             echo
         } >> ~/$SHFILE
         # shellcheck source=/dev/null
