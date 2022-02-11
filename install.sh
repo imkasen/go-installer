@@ -2,6 +2,16 @@
 
 # Install the latest go version
 
+# echo text with color
+RED="31m"
+GREEN="32m"
+YELLOW="33m"
+
+colorEcho(){
+    COLOR=$1
+    echo -e "\033[$COLOR${*:2}\033[0m"
+}
+
 # Check system architecture
 arch(){
     ARCH=$(uname -m)
@@ -14,7 +24,7 @@ arch(){
 }
 
 # Check area
-checkNet(){
+setURL(){
     if [[ $(ping -c2 -i0.3 -W1 "google.com" &> /dev/null) ]]; then
         URL="https://go.dev/dl/"
     else  # China mainland
@@ -24,7 +34,7 @@ checkNet(){
 
 # Download
 downloadGo(){
-    echo "==== start downloading go ===="
+    colorEcho $GREEN "---- start downloading go ----"
 
     VERSION=$(curl -s $URL | grep "downloadBox" | grep "src" | grep -oP '\d+\.\d+\.?\d*' | head -n 1)
     CUR_VERSION=$(go version | grep -oP '\d+\.\d+\.?\d*' | head -n 1)
@@ -32,36 +42,37 @@ downloadGo(){
     
     if [[ "$CUR_VERSION" < "$VERSION" ]]; then
         if [[ ! -e $PACKAGE ]]; then
-            echo "Download '${PACKAGE}' from '${URL}'..." 
+            colorEcho $YELLOW "Download '$PACKAGE' from '$URL'..." 
             curl -LJ "$URL$PACKAGE" -o "$PACKAGE" --progress-bar
         else
-            echo "The package already exists."
+            colorEcho $YELLOW "The package already exists."
         fi
     else
-        echo "!The latest version is already installed! Exit." >& 2
+        colorEcho $RED "The latest version is already installed! Exit!" >& 2
         exit 1 
     fi
 
-    echo "==== end downloading go ===="
+    colorEcho $GREEN "---- end   downloading go ----"
 }
 
 # Install
 installGo(){
-    echo "==== start installing go ===="
+    colorEcho $GREEN "---- start installing go ----"
 
     if [[ -d /usr/local/go/ ]]; then
-        echo "Delete '/usr/local/go/'..."
+        colorEcho $YELLOW "Delete '/usr/local/go/'..."
         sudo rm -rf /usr/local/go/
     fi
-    echo "Untar '${PACKAGE}'..."
+    colorEcho $YELLOW "Untar '$PACKAGE'..."
     sudo tar -C /usr/local -xzf "$PACKAGE"
+    rm "$PACKAGE"
 
-    echo "==== end installing go ===="
+    colorEcho $GREEN "---- end   installing go ----"
 }
 
 # Configure Path
 configPath(){
-    echo "==== start configuring path ===="
+    colorEcho $GREEN "---- start configuring path ----"
 
     SHPATH=$(env | grep "SHELL=")
     if [[ $SHPATH =~ "zsh" ]]; then
@@ -71,7 +82,7 @@ configPath(){
     fi
 
     if [[ -e ~/$SHFILE && $(grep -c "/usr/local/go" ~/$SHFILE) -eq 0 ]]; then
-        echo "Configure path..."
+        colorEcho $YELLOW "Configure path..."
         {
             echo
             echo "# Go"
@@ -80,36 +91,36 @@ configPath(){
             echo
         } >> ~/$SHFILE
         # shellcheck source=/dev/null
-        source ~/${SHFILE}
+        source ~/$SHFILE
         configProxy
     else
-        echo "Go configuration already exists, skip..."
+        colorEcho $YELLOW "Go configuration already exists, skip..."
     fi
 
-    echo "==== end configuring path ===="
+    colorEcho $GREEN "---- end   configuring path ----"
 }
 
 # Configure proxy
 configProxy(){
-    echo "==== start configuring proxy ===="
+    colorEcho $GREEN "---- start configuring proxy ----"
 
     if [[ ! $(ping -c2 -i0.3 -W1 "google.com" &> /dev/null) ]]; then
-        echo "Configure proxy..."
+        colorEcho $YELLOW "Configure proxy..."
         go env -w GO111MODULE=on
         go env -w GOPROXY=https://goproxy.cn,direct
     fi
 
-    echo "==== end configuring proxy ===="
+    colorEcho $GREEN "---- end   configuring proxy ----"
 }
 
 main(){
-    echo "======== Start Installation ========"
+    colorEcho $GREEN "======== Start  Installation ========"
     arch
-    checkNet
+    setURL
     downloadGo
     installGo
     configPath
-    echo "======== Finish installation ========"
+    colorEcho $GREEN "======== Finish Installation ========"
 }
 
 main
