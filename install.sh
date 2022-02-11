@@ -9,6 +9,7 @@ arch(){
 
     if [[ $ARCH == "x86_64" ]] && [[ $SYS == "Linux" ]]; then
         DIS="linux-amd64"
+        FMT="tar.gz"
     fi
 }
 
@@ -23,9 +24,11 @@ checkNet(){
 
 # Download
 downloadGo(){
+    echo "==== start downloading go ===="
+
     VERSION=$(curl -s $URL | grep "downloadBox" | grep "src" | grep -oP '\d+\.\d+\.?\d*' | head -n 1)
     CUR_VERSION=$(go version | grep -oP '\d+\.\d+\.?\d*' | head -n 1)
-    PACKAGE="go$VERSION.$DIS.tar.gz"
+    PACKAGE="go$VERSION.$DIS.$FMT"
     
     if [[ "$CUR_VERSION" < "$VERSION" ]]; then
         if [[ ! -e $PACKAGE ]]; then
@@ -35,24 +38,32 @@ downloadGo(){
             echo "The package already exists."
         fi
     else
-        echo "The latest version is already installed!" >& 2
+        echo "!The latest version is already installed! Exit." >& 2
         exit 1 
     fi
+
+    echo "==== end downloading go ===="
 }
 
 # Install
 installGo(){
+    echo "==== start installing go ===="
+
     if [[ -d /usr/local/go/ ]]; then
         echo "Delete '/usr/local/go/'..."
         sudo rm -rf /usr/local/go/
     fi
     echo "Untar '${PACKAGE}'..."
     sudo tar -C /usr/local -xzf "$PACKAGE"
+
+    echo "==== end installing go ===="
 }
 
 # Configure Path
 configPath(){
-    SHPATH=$(env | grep "SHELL")
+    echo "==== start configuring path ===="
+
+    SHPATH=$(env | grep "SHELL=")
     if [[ $SHPATH =~ "zsh" ]]; then
         SHFILE=".zshrc"
     elif [[ $SHPATH =~ "bash" ]]; then
@@ -70,29 +81,35 @@ configPath(){
         } >> ~/$SHFILE
         # shellcheck source=/dev/null
         source ~/${SHFILE}
+        configProxy
     else
         echo "Go configuration already exists, skip..."
     fi
+
+    echo "==== end configuring path ===="
 }
 
 # Configure proxy
 configProxy(){
+    echo "==== start configuring proxy ===="
+
     if [[ ! $(ping -c2 -i0.3 -W1 "google.com" &> /dev/null) ]]; then
         echo "Configure proxy..."
         go env -w GO111MODULE=on
         go env -w GOPROXY=https://goproxy.cn,direct
     fi
+
+    echo "==== end configuring proxy ===="
 }
 
 main(){
-    echo "====Start Installation===="
+    echo "======== Start Installation ========"
     arch
     checkNet
     downloadGo
     installGo
     configPath
-    configProxy
-    echo "====Finish installation===="
+    echo "======== Finish installation ========"
 }
 
 main
