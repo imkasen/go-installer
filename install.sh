@@ -23,11 +23,20 @@ arch(){
     fi
 }
 
+# Check network
+checkNet(){
+    if [[ $(ping -c2 -i0.3 -W1 "google.com" &> /dev/null) ]]; then
+        CNM=0
+    else
+        CNM=1 # China mainland
+    fi
+}
+
 # Check area
 setURL(){
-    if [[ $(ping -c2 -i0.3 -W1 "google.com" &> /dev/null) ]]; then
+    if [[ $CNM -eq 0 ]]; then
         URL="https://go.dev/dl/"
-    else  # China mainland
+    else
         URL="https://golang.google.cn/dl/"
     fi
 }
@@ -40,15 +49,15 @@ downloadGo(){
     CUR_VERSION=$(go version | grep -oP '\d+\.\d+\.?\d*' | head -n 1)
     PACKAGE="go$VERSION.$DIS.$FMT"
     
-    if [[ "$CUR_VERSION" < "$VERSION" ]]; then
+    if [[ "$CUR_VERSION" != "$VERSION" ]]; then
         if [[ ! -e $PACKAGE ]]; then
             colorEcho $YELLOW "Download '$PACKAGE' from '$URL'..." 
             curl -LJ "$URL$PACKAGE" -o "$PACKAGE" --progress-bar
         else
-            colorEcho $YELLOW "The package already exists."
+            colorEcho $YELLOW "The package already exists, skip downloading..."
         fi
     else
-        colorEcho $RED "The latest version is already installed! Exit!" >& 2
+        colorEcho $RED "The latest version is already installed, exit!" >& 2
         exit 1 
     fi
 
@@ -104,7 +113,7 @@ configPath(){
 configProxy(){
     colorEcho $GREEN "---- start configuring proxy ----"
 
-    if [[ ! $(ping -c2 -i0.3 -W1 "google.com" &> /dev/null) ]]; then
+    if [[ $CNM -eq 1 ]]; then
         colorEcho $YELLOW "Configure proxy..."
         go env -w GO111MODULE=on
         go env -w GOPROXY=https://goproxy.cn,direct
@@ -116,6 +125,7 @@ configProxy(){
 main(){
     colorEcho $GREEN "======== Start  Installation ========"
     arch
+    checkNet
     setURL
     downloadGo
     installGo
