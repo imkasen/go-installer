@@ -15,11 +15,18 @@ colorEcho(){
 # Check system architecture
 arch(){
     ARCH=$(uname -m)
-    SYS=$(uname)
+    SYS=$(uname -s)
+    SYSDIS=$(< /etc/os-release head -n 1)
 
     if [[ $ARCH == "x86_64" ]] && [[ $SYS == "Linux" ]]; then
         DIS="linux-amd64"
         FMT="tar.gz"
+
+        # curl is not installed 
+        if [[ $SYSDIS =~ "Ubuntu" || $SYSDIS =~ "Debian" ]] && ! curl --help &> /dev/null; then
+            colorEcho $YELLOW "Install curl..."
+            sudo apt install curl
+        fi
     fi
 }
 
@@ -46,7 +53,7 @@ downloadGo(){
     colorEcho $GREEN "---- start downloading go ----"
 
     VERSION=$(curl -s $URL | grep "downloadBox" | grep "src" | grep -oP '\d+\.\d+\.?\d*' | head -n 1)
-    CUR_VERSION=$(go version | grep -oP '\d+\.\d+\.?\d*' | head -n 1)
+    CUR_VERSION=$(go version 2> /dev/null | grep -oP '\d+\.\d+\.?\d*' | head -n 1)
     PACKAGE="go$VERSION.$DIS.$FMT"
     
     if [[ "$CUR_VERSION" != "$VERSION" ]]; then
@@ -99,9 +106,9 @@ configPath(){
             echo "export PATH=\$PATH:\$GOROOT/bin"
             echo
         } >> ~/$SHFILE
-        # shellcheck source=/dev/null
-        source ~/$SHFILE
         configProxy
+
+        colorEcho $YELLOW "PLEASE 'source' YOUR '$SHFILE' FILE!"
     else
         colorEcho $YELLOW "Go configuration already exists, skip..."
     fi
