@@ -52,7 +52,7 @@ setURL(){
 downloadGo(){
     colorEcho $GREEN "---- start downloading go ----"
 
-    VERSION=$(curl -s $URL | grep "downloadBox" | grep "src" | grep -oP '\d+\.\d+\.?\d*' | head -n 1)
+    VERSION=$(curl -s $URL | grep "downloadBox" | grep "src" | grep -oP '\d+\.\d+(\.\d+)?' | head -n 1)
     CUR_VERSION=$(go version 2> /dev/null | grep -oP '\d+\.\d+\.?\d*' | head -n 1)
     PACKAGE="go$VERSION.$DIS.$FMT"
     
@@ -108,7 +108,7 @@ configPath(){
         } >> ~/$SHFILE
         configProxy
 
-        colorEcho $YELLOW "PLEASE 'source' YOUR '$SHFILE' FILE!"
+        colorEcho $YELLOW "!PLEASE 'source' YOUR '$SHFILE' FILE!"
     else
         colorEcho $YELLOW "Go configuration already exists, skip..."
     fi
