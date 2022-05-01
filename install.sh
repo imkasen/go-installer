@@ -106,9 +106,10 @@ configPath(){
             echo "export PATH=\$PATH:\$GOROOT/bin"
             echo
         } >> ~/$SHFILE
-        configProxy
+        # shellcheck source=/dev/null
+        source ~/$SHFILE
 
-        colorEcho $YELLOW "!PLEASE 'source' YOUR '$SHFILE' FILE!"
+        configProxy
     else
         colorEcho $YELLOW "Go configuration already exists, skip..."
     fi
