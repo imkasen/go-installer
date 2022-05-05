@@ -106,9 +106,6 @@ configPath(){
             echo "export PATH=\$PATH:\$GOROOT/bin"
             echo
         } >> ~/$SHFILE
-        # shellcheck source=/dev/null
-        source ~/$SHFILE
-
         configProxy
     else
         colorEcho $YELLOW "Go configuration already exists, skip..."
@@ -123,8 +120,15 @@ configProxy(){
 
     if [[ $CNM -eq 1 ]]; then
         colorEcho $YELLOW "Configure proxy..."
-        go env -w GO111MODULE=on
-        go env -w GOPROXY=https://goproxy.cn,direct
+        # go env -w GO111MODULE=on
+        # go env -w GOPROXY=https://goproxy.cn,direct
+        {
+            echo "# Go Proxy"
+            echo "# https://goproxy.cn"
+            echo "export GO111MODULE=on"
+            echo "export GOPROXY=https://goproxy.cn,direct"
+            echo
+        } >> ~/$SHFILE
     fi
 
     colorEcho $GREEN "---- end   configuring proxy ----"
@@ -139,6 +143,7 @@ main(){
     installGo
     configPath
     colorEcho $GREEN "======== Finish Installation ========"
+    colorEcho $YELLOW "Please SOURCE your '$SHFILE' file!"
 }
 
 main
