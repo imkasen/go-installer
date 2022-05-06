@@ -24,7 +24,7 @@ arch(){
 
         # curl is not installed 
         if [[ $SYSDIS =~ "Ubuntu" || $SYSDIS =~ "Debian" ]] && ! curl --help &> /dev/null; then
-            colorEcho $YELLOW "Install curl..."
+            colorEcho $YELLOW "Installing 'curl'..."
             sudo apt install curl
         fi
     fi
@@ -50,7 +50,7 @@ setURL(){
 
 # Download
 downloadGo(){
-    colorEcho $GREEN "---- start downloading go ----"
+    colorEcho $GREEN "Start downloading go:"
 
     VERSION=$(curl -s $URL | grep "downloadBox" | grep "src" | grep -oP '\d+\.\d+(\.\d+)?' | head -n 1)
     CUR_VERSION=$(go version 2> /dev/null | grep -oP '\d+\.\d+\.?\d*' | head -n 1)
@@ -58,7 +58,7 @@ downloadGo(){
     
     if [[ "$CUR_VERSION" != "$VERSION" ]]; then
         if [[ ! -e $PACKAGE ]]; then
-            colorEcho $YELLOW "Download '$PACKAGE' from '$URL'..." 
+            colorEcho $YELLOW "Downloading '$PACKAGE' from '$URL'..." 
             curl -LJ "$URL$PACKAGE" -o "$PACKAGE" --progress-bar
         else
             colorEcho $YELLOW "The package already exists, skip downloading..."
@@ -68,27 +68,27 @@ downloadGo(){
         exit 1 
     fi
 
-    colorEcho $GREEN "---- end   downloading go ----"
+    clear
 }
 
 # Install
 installGo(){
-    colorEcho $GREEN "---- start installing go ----"
+    colorEcho $GREEN "Start installing go:"
 
     if [[ -d /usr/local/go/ ]]; then
-        colorEcho $YELLOW "Delete '/usr/local/go/'..."
+        colorEcho $YELLOW "Deleting '/usr/local/go/'..."
         sudo rm -rf /usr/local/go/
     fi
-    colorEcho $YELLOW "Untar '$PACKAGE'..."
+    colorEcho $YELLOW "Unpacking '$PACKAGE'..."
     sudo tar -C /usr/local -xzf "$PACKAGE"
     rm "$PACKAGE"
 
-    colorEcho $GREEN "---- end   installing go ----"
+    clear
 }
 
 # Configure Path
 configPath(){
-    colorEcho $GREEN "---- start configuring path ----"
+    colorEcho $GREEN "Start configuring path:"
 
     SHPATH=$(env | grep "SHELL=")
     if [[ $SHPATH =~ "zsh" ]]; then
@@ -98,7 +98,7 @@ configPath(){
     fi
 
     if [[ -e ~/$SHFILE && $(grep -c "/usr/local/go" ~/$SHFILE) -eq 0 ]]; then
-        colorEcho $YELLOW "Configure path..."
+        colorEcho $YELLOW "Configuring path..."
         {
             echo
             echo "# Go"
@@ -111,17 +111,15 @@ configPath(){
         colorEcho $YELLOW "Go configuration already exists, skip..."
     fi
 
-    colorEcho $GREEN "---- end   configuring path ----"
+    clear
 }
 
 # Configure proxy
 configProxy(){
-    colorEcho $GREEN "---- start configuring proxy ----"
+    colorEcho $GREEN "Start configuring proxy:"
 
     if [[ $CNM -eq 1 ]]; then
-        colorEcho $YELLOW "Configure proxy..."
-        # go env -w GO111MODULE=on
-        # go env -w GOPROXY=https://goproxy.cn,direct
+        colorEcho $YELLOW "Configuring proxy..."
         {
             echo "# Go Proxy"
             echo "# https://goproxy.cn"
@@ -130,19 +128,16 @@ configProxy(){
             echo
         } >> ~/$SHFILE
     fi
-
-    colorEcho $GREEN "---- end   configuring proxy ----"
 }
 
 main(){
-    colorEcho $GREEN "======== Start  Installation ========"
     arch
     checkNet
     setURL
     downloadGo
     installGo
     configPath
-    colorEcho $GREEN "======== Finish Installation ========"
+    colorEcho $GREEN "Finish Installation."
     colorEcho $YELLOW "Please SOURCE your '$SHFILE' file!"
 }
 
