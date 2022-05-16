@@ -8,9 +8,6 @@ Automatically install the latest version of Go on Ubuntu/Debian.
 # default
 curl -fsL https://raw.githubusercontent.com/imkasen/go-install/master/install.sh | bash
 
-# jsdelivr proxy
-curl -fsL https://cdn.jsdelivr.net/gh/imkasen/go-install@master/install.sh | bash
-
 # fastgit proxy
 curl -fsL https://raw.fastgit.org/imkasen/go-install/master/install.sh | bash
 ```
