@@ -1,21 +1,34 @@
 #!/usr/bin/env bash
-
+#
 # Install the latest version of Go.
 
-# echo text with color
-RED="31m"
-GREEN="32m"
-YELLOW="33m"
+#----------------------------------------------------------
+# functions
 
-colorEcho(){
+#######################################
+# colorful_echo function
+#
+# echo text with different colors
+#######################################
+readonly RED="31m"
+readonly GREEN="32m"
+readonly YELLOW="33m"
+
+colorful_echo(){
     COLOR=$1
     echo -e "\033[$COLOR${*:2}\033[0m"
 }
 
-# Check system architecture
-arch(){
+#######################################
+# check_os function
+#
+# check architecture and version
+#######################################
+check_os(){
     ARCH=$(uname -m)
     SYS=$(uname -s)
+    readonly ARCH
+    readonly SYS
 
     if [[ $ARCH == "x86_64" ]] && [[ $SYS == "Linux" ]]; then
         DIS="linux-amd64"
@@ -23,81 +36,101 @@ arch(){
 
         # 'curl' is not installed
         if command -v apt &> /dev/null && ! command -v curl &> /dev/null; then
-            colorEcho $YELLOW "Installing 'curl'..."
+            colorful_echo $YELLOW "Installing 'curl'..."
             sudo apt install curl
         fi
     fi
+    readonly DIS
+    readonly FMT
 }
 
-# Check network
-checkNet(){
+#######################################
+# check_network function
+#
+# adjust for Mainland China
+#######################################
+check_network(){
     if [[ ! $(ping -c2 -i0.3 -W1 "google.com" &> /dev/null) ]]; then
-        CNM=1 # China mainland
-    fi
-}
-
-# Check area
-setURL(){
-    if [[ $CNM -eq 1 ]]; then
+        readonly CNM=1 # Mainland China
         URL="https://golang.google.cn/dl/"
     else
         URL="https://go.dev/dl/"
     fi
+    readonly URL
 }
 
-# Download
-downloadGo(){
-    colorEcho $GREEN "Start downloading go:"
-
+#######################################
+# download function
+#
+# download go package from web,
+# skip if the package exists,
+# quit if the latest version exists
+#######################################
+download(){
     VERSION=$(curl -s $URL | grep "downloadBox" | grep "src" | grep -oP '\d+\.\d+(\.\d+)?' | head -n 1)
     CUR_VERSION=$(go version 2> /dev/null | grep -oP '\d+\.\d+\.?\d*' | head -n 1)
     PACKAGE="go$VERSION.$DIS.$FMT"
+    readonly VERSION
+    readonly CUR_VERSION
+    readonly PACKAGE
 
     if [[ -z $CUR_VERSION ]]; then
-        FIRST_INSTALL=1
+        readonly FIRST_INSTALL=1
     fi
 
     if [[ "$CUR_VERSION" != "$VERSION" ]]; then
+        colorful_echo $GREEN "Start downloading go:"
         if [[ ! -e $PACKAGE ]]; then
-            colorEcho $YELLOW "Downloading '$PACKAGE' from '$URL'..."
+            colorful_echo $YELLOW "Downloading '$PACKAGE' from '$URL'..."
             curl -LJ "$URL$PACKAGE" -o "$PACKAGE" --progress-bar
         else
-            colorEcho $YELLOW "The package already exists, skip downloading..."
+            colorful_echo $YELLOW "The package already exists, skip downloading..."
         fi
     else
-        colorEcho $RED "The latest version is already installed, exit!" >& 2
+        colorful_echo $RED "The latest version is already installed, exit!" >& 2
         exit 1
     fi
 
     clear
 }
 
-# Install
-installGo(){
-    colorEcho $GREEN "Start installing go:"
+#######################################
+# install function
+#
+# delete the old version if it exists
+# unpack the downloaded package
+#######################################
+install(){
+    colorful_echo $GREEN "Start installing go:"
 
     if [[ -d /usr/local/go/ ]]; then
-        colorEcho $YELLOW "Deleting '/usr/local/go/'..."
+        colorful_echo $YELLOW "Deleting '/usr/local/go/'..."
         sudo rm -rf /usr/local/go/
     fi
-    colorEcho $YELLOW "Unpacking '$PACKAGE'..."
+
+    colorful_echo $YELLOW "Unpacking '$PACKAGE'..."
     sudo tar -C /usr/local -xzf "$PACKAGE"
     rm "$PACKAGE"
 }
 
-# Configure Path
-configPath(){
-    colorEcho $GREEN "Start configuring path:"
-
+#######################################
+# set_path function
+#
+# set go path when installing for the first time
+#######################################
+set_path(){
     SHPATH=$(env | grep "SHELL=")
+    readonly SHPATH
+
     if [[ $SHPATH =~ "zsh" ]]; then
         SHFILE=".zshrc"
     elif [[ $SHPATH =~ "bash" ]]; then
         SHFILE=".bashrc"
     fi
+    readonly SHFILE
 
     if [[ -e ~/$SHFILE && $FIRST_INSTALL -eq 1 ]]; then
-        colorEcho $YELLOW "Configuring path..."
+        colorful_echo $YELLOW "Configuring path..."
         {
             echo
             echo "# Go"
@@ -106,37 +139,37 @@ configPath(){
             echo
         } >> ~/$SHFILE
 
-        configProxy
+        set_proxy
     else
-        colorEcho $YELLOW "Skip configuration"
+        colorful_echo $YELLOW "Skip setting path."
     fi
 }
 
-# Configure proxy
-configProxy(){
-    colorEcho $GREEN "Start configuring proxy:"
-
+#######################################
+# set_proxy function
+#
+# set proxy for Chinese when installing for the first time
+#######################################
+set_proxy(){
     if [[ $CNM -eq 1 ]]; then
-        colorEcho $YELLOW "Configuring proxy..."
+        colorful_echo $YELLOW "Configuring proxy..."
         {
-            echo "# Go Proxy for chinese users"
+            echo "# Go Proxy for Chinese"
             echo "export GO111MODULE=on"
             echo "export GOPROXY=https://goproxy.cn,direct"
             echo
         } >> ~/$SHFILE
     fi
 
-    colorEcho $YELLOW "PLEASE SOURCE YOUR '$SHFILE' FILE!"
+    colorful_echo $YELLOW "PLEASE SOURCE YOUR '$SHFILE' FILE!"
 }
 
-main(){
-    arch
-    checkNet
-    setURL
-    downloadGo
-    installGo
-    configPath
-    colorEcho $GREEN "Finish Installation."
-}
+#----------------------------------------------------------
+# main
 
-main
+check_os
+check_network
+download
+install
+set_path
+colorful_echo $GREEN "Finish Installation."
