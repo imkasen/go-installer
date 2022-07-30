@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Install the latest go version
+# Install the latest version of Go.
 
 # echo text with color
 RED="31m"
@@ -16,14 +16,13 @@ colorEcho(){
 arch(){
     ARCH=$(uname -m)
     SYS=$(uname -s)
-    SYSDIS=$(< /etc/os-release head -n 1)
 
     if [[ $ARCH == "x86_64" ]] && [[ $SYS == "Linux" ]]; then
         DIS="linux-amd64"
         FMT="tar.gz"
 
-        # curl is not installed 
-        if [[ $SYSDIS =~ "Ubuntu" || $SYSDIS =~ "Debian" ]] && ! curl --help &> /dev/null; then
+        # 'curl' is not installed
+        if command -v apt &> /dev/null && ! command -v curl &> /dev/null; then
             colorEcho $YELLOW "Installing 'curl'..."
             sudo apt install curl
         fi
@@ -32,19 +31,17 @@ arch(){
 
 # Check network
 checkNet(){
-    if [[ $(ping -c2 -i0.3 -W1 "google.com" &> /dev/null) ]]; then
-        CNM=0
-    else
+    if [[ ! $(ping -c2 -i0.3 -W1 "google.com" &> /dev/null) ]]; then
         CNM=1 # China mainland
     fi
 }
 
 # Check area
 setURL(){
-    if [[ $CNM -eq 0 ]]; then
-        URL="https://go.dev/dl/"
-    else
+    if [[ $CNM -eq 1 ]]; then
         URL="https://golang.google.cn/dl/"
+    else
+        URL="https://go.dev/dl/"
     fi
 }
 
@@ -55,17 +52,21 @@ downloadGo(){
     VERSION=$(curl -s $URL | grep "downloadBox" | grep "src" | grep -oP '\d+\.\d+(\.\d+)?' | head -n 1)
     CUR_VERSION=$(go version 2> /dev/null | grep -oP '\d+\.\d+\.?\d*' | head -n 1)
     PACKAGE="go$VERSION.$DIS.$FMT"
-    
+
+    if [[ -z $CUR_VERSION ]]; then
+        FIRST_INSTALL=1
+    fi
+
     if [[ "$CUR_VERSION" != "$VERSION" ]]; then
         if [[ ! -e $PACKAGE ]]; then
-            colorEcho $YELLOW "Downloading '$PACKAGE' from '$URL'..." 
+            colorEcho $YELLOW "Downloading '$PACKAGE' from '$URL'..."
             curl -LJ "$URL$PACKAGE" -o "$PACKAGE" --progress-bar
         else
             colorEcho $YELLOW "The package already exists, skip downloading..."
         fi
     else
         colorEcho $RED "The latest version is already installed, exit!" >& 2
-        exit 1 
+        exit 1
     fi
 
     clear
@@ -82,8 +83,6 @@ installGo(){
     colorEcho $YELLOW "Unpacking '$PACKAGE'..."
     sudo tar -C /usr/local -xzf "$PACKAGE"
     rm "$PACKAGE"
-
-    clear
 }
 
 # Configure Path
@@ -97,7 +96,7 @@ configPath(){
         SHFILE=".bashrc"
     fi
 
-    if [[ -e ~/$SHFILE && $(grep -c "/usr/local/go" ~/$SHFILE) -eq 0 ]]; then
+    if [[ -e ~/$SHFILE && $FIRST_INSTALL -eq 1 ]]; then
         colorEcho $YELLOW "Configuring path..."
         {
             echo
@@ -106,12 +105,11 @@ configPath(){
             echo "export PATH=\$PATH:\$GOROOT/bin"
             echo
         } >> ~/$SHFILE
+
         configProxy
     else
-        colorEcho $YELLOW "Go configuration already exists, skip..."
+        colorEcho $YELLOW "Skip configuration"
     fi
-
-    clear
 }
 
 # Configure proxy
@@ -121,13 +119,14 @@ configProxy(){
     if [[ $CNM -eq 1 ]]; then
         colorEcho $YELLOW "Configuring proxy..."
         {
-            echo "# Go Proxy"
-            echo "# https://goproxy.cn"
+            echo "# Go Proxy for chinese users"
             echo "export GO111MODULE=on"
             echo "export GOPROXY=https://goproxy.cn,direct"
             echo
         } >> ~/$SHFILE
     fi
+
+    colorEcho $YELLOW "PLEASE SOURCE YOUR '$SHFILE' FILE!"
 }
 
 main(){
@@ -138,7 +137,6 @@ main(){
     installGo
     configPath
     colorEcho $GREEN "Finish Installation."
-    colorEcho $YELLOW "Please SOURCE your '$SHFILE' file!"
 }
 
 main
