@@ -62,7 +62,7 @@ check_os(){
 # adjust for Mainland China
 #######################################
 check_network(){
-    if [[ ! $(ping -c2 -i0.3 -W1 "google.com" &> /dev/null) ]]; then
+    if ! ping -c2 -i0.3 -W1 "google.com" &> /dev/null; then
         readonly CNM=1 # Mainland China
         URL="https://golang.google.cn/dl/"
     else
