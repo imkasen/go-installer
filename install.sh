@@ -34,10 +34,22 @@ check_os(){
         DIS="linux-amd64"
         FMT="tar.gz"
 
-        # 'curl' is not installed
-        if command -v apt &> /dev/null && ! command -v curl &> /dev/null; then
-            colorful_echo $YELLOW "Installing 'curl'..."
-            sudo apt install curl
+        if command -v apt &> /dev/null; then
+            # 'curl' is not installed
+            if ! command -v curl &> /dev/null; then
+                colorful_echo $YELLOW "Installing 'curl'..."
+                sudo apt install curl -y
+            fi
+            # sha256sum
+            if ! command -v sha256sum &> /dev/null; then
+                colorful_echo $YELLOW "Installing 'coreutils'..."
+                sudo apt install coreutils -y
+            fi
+            # tar
+            if ! command -v tar &> /dev/null; then
+                colorful_echo $YELLOW "Installing 'tar'..."
+                sudo apt install tar -y
+            fi
         fi
     fi
     readonly DIS
@@ -67,10 +79,12 @@ check_network(){
 # quit if the latest version exists
 #######################################
 download(){
-    VERSION=$(curl -s $URL | grep "downloadBox" | grep "src" | grep -oP '\d+\.\d+(\.\d+)?' | head -n 1)
-    CUR_VERSION=$(go version 2> /dev/null | grep -oP '\d+\.\d+\.?\d*' | head -n 1)
+    VERSION=$(curl -s $URL | grep "downloadBox" | grep "src" | grep -oP '\d+\.\d+(\.\d+)?')
+    CUR_VERSION=$(go version 2> /dev/null | grep -oP '\d+\.\d+\.?\d*')
     PACKAGE="go$VERSION.$DIS.$FMT"
+    CHECKSUM=$(curl -s $URL | grep -A 5 "$PACKAGE\">$PACKAGE" | grep -oP '(?<=<td><tt>).*(?=</tt></td>)')
     readonly VERSION
+    readonly CHECKSUM
     readonly CUR_VERSION
     readonly PACKAGE
 
@@ -79,6 +93,11 @@ download(){
         if [[ ! -e "/tmp/$PACKAGE" ]]; then
             colorful_echo $YELLOW "Downloading '$PACKAGE' from '$URL'..."
             HTTP_CODE=$(curl --connect-timeout 10 -w "%{http_code}" -LJ "$URL$PACKAGE" -o "/tmp/$PACKAGE" --progress-bar)
+
+            if [[ $HTTP_CODE -ne 200 ]]; then
+                colorful_echo $RED "Request go package failed with the http code '$RTN_CODE'!"
+                exit 1
+            fi
         else
             colorful_echo $YELLOW "The package already exists, skip downloading..."
         fi
@@ -87,8 +106,9 @@ download(){
         exit 1
     fi
 
-    if [[ $HTTP_CODE -ne 200 ]]; then
-        colorful_echo $RED "Request go package failed with the http code '$RTN_CODE'!"
+    if [[ $(sha256sum "/tmp/$PACKAGE" | awk '{print $1}') != "$CHECKSUM" ]]; then
+        colorful_echo $RED "The sha256 checksum of downloaded package is wrong, delete it and exit!"
+        rm "/tmp/$PACKAGE"
         exit 1
     fi
 
