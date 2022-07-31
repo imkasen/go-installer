@@ -74,20 +74,21 @@ download(){
     readonly CUR_VERSION
     readonly PACKAGE
 
-    if [[ -z $CUR_VERSION ]]; then
-        readonly FIRST_INSTALL=1
-    fi
-
     if [[ "$CUR_VERSION" != "$VERSION" ]]; then
         colorful_echo $GREEN "Start downloading go:"
-        if [[ ! -e $PACKAGE ]]; then
+        if [[ ! -e "/tmp/$PACKAGE" ]]; then
             colorful_echo $YELLOW "Downloading '$PACKAGE' from '$URL'..."
-            curl -LJ "$URL$PACKAGE" -o "$PACKAGE" --progress-bar
+            HTTP_CODE=$(curl --connect-timeout 10 -w "%{http_code}" -LJ "$URL$PACKAGE" -o "/tmp/$PACKAGE" --progress-bar)
         else
             colorful_echo $YELLOW "The package already exists, skip downloading..."
         fi
     else
         colorful_echo $RED "The latest version is already installed, exit!" >& 2
+        exit 1
+    fi
+
+    if [[ $HTTP_CODE -ne 200 ]]; then
+        colorful_echo $RED "Request go package failed with the http code '$RTN_CODE'!"
         exit 1
     fi
 
@@ -109,8 +110,11 @@ install(){
     fi
 
     colorful_echo $YELLOW "Unpacking '$PACKAGE'..."
-    sudo tar -C /usr/local -xzf "$PACKAGE"
-    rm "$PACKAGE"
+    if ! sudo tar -C /usr/local -xzf "/tmp/$PACKAGE" ; then
+        colorful_echo $RED "Fail to unpack '$PACKAGE', exit!"
+        sudo rm -rf /usr/local/go/
+        exit 1
+    fi
 }
 
 #######################################
@@ -129,7 +133,7 @@ set_path(){
     fi
     readonly SHFILE
 
-    if [[ -e ~/$SHFILE && $FIRST_INSTALL -eq 1 ]]; then
+    if [[ -e ~/$SHFILE && $(grep -c "/usr/local/go" ~/$SHFILE) -eq 0 ]]; then
         colorful_echo $YELLOW "Configuring path..."
         {
             echo
