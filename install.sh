@@ -150,6 +150,8 @@ set_path(){
         SHFILE=".zshrc"
     elif [[ $SHPATH =~ "bash" ]]; then
         SHFILE=".bashrc"
+    else
+        SHFILE="UNKNOWN"
     fi
     readonly SHFILE
 
@@ -164,8 +166,10 @@ set_path(){
         } >> ~/$SHFILE
 
         set_proxy
+    elif [[ $SHFILE == "UNKNOWN" ]]; then
+        colorful_echo $YELLOW "Please add '/usr/local/go/bin' to the 'PATH' environment variable"
     else
-        colorful_echo $YELLOW "Skip setting path."
+        colorful_echo $YELLOW "Configuration already exists, skip setting path."
     fi
 }
 
