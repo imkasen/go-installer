@@ -143,7 +143,7 @@ install(){
 # set go path when installing for the first time
 #######################################
 set_path(){
-    SHPATH=$(env | grep "SHELL=")
+    SHPATH=$(env | grep "SHELL")
     readonly SHPATH
 
     if [[ $SHPATH =~ "zsh" ]]; then
@@ -155,21 +155,24 @@ set_path(){
     fi
     readonly SHFILE
 
-    if [[ -e ~/$SHFILE && $(grep -c "/usr/local/go" ~/$SHFILE) -eq 0 ]]; then
-        colorful_echo $YELLOW "Configuring path..."
-        {
-            echo
-            echo "# Go"
-            echo "export GOROOT=/usr/local/go"
-            echo "export PATH=\$PATH:\$GOROOT/bin"
-            echo
-        } >> ~/$SHFILE
+    if ! which go; then
+        if [[ -e ~/$SHFILE ]]; then
+            colorful_echo $YELLOW "Configuring path..."
+            {
+                echo
+                echo "# Go"
+                echo "export GOROOT=/usr/local/go"
+                echo "export PATH=\$PATH:\$GOROOT/bin"
+                echo
+            } >> ~/$SHFILE
 
-        set_proxy
-    elif [[ $SHFILE == "UNKNOWN" ]]; then
-        colorful_echo $YELLOW "Please add '/usr/local/go/bin' to the 'PATH' environment variable"
+            set_proxy
+
+        elif [[ $SHFILE == "UNKNOWN" ]]; then
+            colorful_echo $YELLOW "Please add '/usr/local/go/bin' to the 'PATH'"
+        fi
     else
-        colorful_echo $YELLOW "Configuration already exists, skip setting path."
+        colorful_echo $YELLOW "Skip setting go path."
     fi
 }
 

@@ -32,7 +32,7 @@ The script is based on the official installation instruction from [Go Docs](http
     * *People in Mainland China will use the URL `https://golang.google.cn/dl/`.*
 2. The release will be installed at `/usr/local/go`.
 3. The `GOPATH` will be added to `PATH`.
-   * *People in Mainland China will be added a `GOPROXY` setting*
+   * *People in Mainland China will be added a `GOPROXY` setting*.
 
 ## LICENSE
 
