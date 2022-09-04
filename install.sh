@@ -182,14 +182,12 @@ set_path(){
 # set proxy for Chinese when installing for the first time
 #######################################
 set_proxy(){
-    if [[ $CNM -eq 1 ]]; then
+    readonly GO="/usr/local/go/bin/go"
+
+    if [[ $CNM -eq 1 && $($GO env | grep "GOPROXY" | cut -d '"' -f 2) == "https://proxy.golang.org,direct" ]]; then
         colorful_echo $YELLOW "Configuring proxy..."
-        {
-            echo "# Go Proxy for Chinese"
-            echo "export GO111MODULE=on"
-            echo "export GOPROXY=https://goproxy.cn,direct"
-            echo
-        } >> ~/$SHFILE
+        $GO env -w GO111MODULE=on
+        $GO env -w GOPROXY=https://goproxy.cn,direct
     fi
 
     colorful_echo $YELLOW "PLEASE SOURCE YOUR '$SHFILE' FILE!"
