@@ -10,10 +10,10 @@ Automatically install the latest version of Go.
 
 ``` Bash
 # default
-curl -fsL https://raw.githubusercontent.com/imkasen/go-installer/master/install.sh | bash
+curl -fsL https://raw.githubusercontent.com/imkasen/go-installer/main/install.sh | bash
 
 # fastgit proxy
-curl -fsL https://raw.fastgit.org/imkasen/go-installer/master/install.sh | bash
+curl -fsL https://raw.fastgit.org/imkasen/go-installer/main/install.sh | bash
 ```
 
 ### Offline
