@@ -155,7 +155,7 @@ set_path(){
     fi
     readonly SHFILE
 
-    if ! which go; then
+    if ! which go &> /dev/null; then
         if [[ -e ~/$SHFILE ]]; then
             colorful_echo $YELLOW "Configuring path..."
             {
