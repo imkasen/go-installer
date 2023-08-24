@@ -92,10 +92,11 @@ download(){
         colorful_echo $GREEN "Start downloading go:"
         if [[ ! -e "/tmp/$PACKAGE" ]]; then
             colorful_echo $YELLOW "Downloading '$PACKAGE' from '$URL'..."
+            local HTTP_CODE
             HTTP_CODE=$(curl --connect-timeout 10 -w "%{http_code}" -LJ "$URL$PACKAGE" -o "/tmp/$PACKAGE" --progress-bar)
 
             if [[ $HTTP_CODE -ne 200 ]]; then
-                colorful_echo $RED "Request go package failed with the http code '$RTN_CODE'!"
+                colorful_echo $RED "Request go package failed with the http code '$HTTP_CODE'!" >& 2
                 exit 1
             fi
         else
@@ -107,7 +108,7 @@ download(){
     fi
 
     if [[ $(sha256sum "/tmp/$PACKAGE" | awk '{print $1}') != "$CHECKSUM" ]]; then
-        colorful_echo $RED "The sha256 checksum of downloaded package is wrong, delete it and exit!"
+        colorful_echo $RED "The sha256 checksum of downloaded package is wrong, delete it and exit!" >& 2
         rm "/tmp/$PACKAGE"
         exit 1
     fi
@@ -130,8 +131,8 @@ install(){
     fi
 
     colorful_echo $YELLOW "Unpacking '$PACKAGE'..."
-    if ! sudo tar -C /usr/local -xzf "/tmp/$PACKAGE" ; then
-        colorful_echo $RED "Fail to unpack '$PACKAGE', exit!"
+    if ! sudo tar -C /usr/local -xzf "/tmp/$PACKAGE"; then
+        colorful_echo $RED "Fail to unpack '$PACKAGE', exit!" >& 2
         sudo rm -rf /usr/local/go/
         exit 1
     fi
